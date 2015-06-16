@@ -43,6 +43,11 @@ class Module extends \yii\base\Module
      */
     public $storageMap = [];
     
+    
+    
+    
+    public $options = [];
+    
     /**
      * @var array GrantTypes collection
      */
@@ -80,7 +85,8 @@ class Module extends \yii\base\Module
     public function getServer()
     {
         if(!$this->has('server')) {
-            $storages = [];
+            $storages = $this->createStorages();
+            $server = new \OAuth2\Server($storages, $this->options);
             
             if($this->useJwtToken)
             {
@@ -149,6 +155,57 @@ class Module extends \yii\base\Module
         return $this->get('response');
     }
 
+    /**
+     * Create storages
+     * @return type
+     */
+    public function createStorages()
+    {
+        $connection = Yii::$app->getDb();
+        if(!$connection->getIsActive()) {
+            $connection->open();
+        }
+        
+        $storages = [];
+        foreach($this->storageMap as $name => $storage) {
+            $storages[$name] = Yii::createObject($storage);
+        }
+        
+        $defaults = [
+            'access_token',
+            'authorization_code',
+            'client_credentials',
+            'client',
+            'refresh_token',
+            'user_credentials',
+            'public_key',
+            'jwt_bearer',
+            'scope',
+        ];
+        foreach($defaults as $name) {
+            if(!isset($storages[$name])) {
+                $storages[$name] = Yii::createObject($this->storageDefault);
+            }
+        }
+        
+        return $storages;
+    }
+    
+    /**
+     * Get object instance of model
+     * @param string $name
+     * @param array $config
+     * @return ActiveRecord
+     */
+    public function model($name, $config = [])
+    {
+        if(!isset($this->_models[$name])) {
+            $className = $this->modelClasses[ucfirst($name)];
+            $this->_models[$name] = Yii::createObject(array_merge(['class' => $className], $config));
+        }
+        return $this->_models[$name];
+    }
+    
     /**
      * Register translations for this module
      * 
