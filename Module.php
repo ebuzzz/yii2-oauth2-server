@@ -73,6 +73,7 @@ class Module extends \yii\base\Module
     public function init()
     {
         parent::init();
+        $this->registerComponents();
         $this->registerTranslations();
     }
     
@@ -119,7 +120,7 @@ class Module extends \yii\base\Module
                 $config = array_merge([0 => $storages[$name]], [$options]);
 
                 $instance = $reflection->newInstanceArgs($config);
-                $grantTypes[$name] = $instance;
+                $server->addGrantType($instance);
             }
             
             $server = \Yii::$container->get(Server::className(), [
