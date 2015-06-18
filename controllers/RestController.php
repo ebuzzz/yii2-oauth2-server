@@ -22,7 +22,10 @@ class RestController extends \yii\rest\Controller
     
     public function actionToken()
     {
-        $response = $this->module->getServer()->handleTokenRequest();
+        $server = $this->module->getServer();
+        $request = $this->module->getRequest();
+        $response = $server->handleTokenRequest($request);
+        
         return $response->getParameters();
     }
 }
