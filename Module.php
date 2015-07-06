@@ -59,7 +59,7 @@ class Module extends \yii\base\Module
     public $responseTypes = [];
     
     /**
-     * @var string name of access token parameter
+     * @var string Name of access token parameter
      */
     public $tokenParamName;
     
