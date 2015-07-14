@@ -73,6 +73,11 @@ class Module extends \yii\base\Module
     public $useJwtToken = false;//ADDED
     
     /**
+     * @var integer Max refresh token lifetime in seconds
+     */
+    public $tokenRefreshLifetime;
+    
+    /**
      * @inheritdoc
      */
     public function init()
@@ -135,6 +140,7 @@ class Module extends \yii\base\Module
                     'use_jwt_access_tokens' => $this->useJwtToken,//ADDED
                     'token_param_name' => $this->tokenParamName,
                     'access_lifetime' => $this->tokenAccessLifetime,
+                    'refresh_token_lifetime' => $this->tokenRefreshLifetime,
                     /** add more ... */
                 ],
                 $grantTypes,
