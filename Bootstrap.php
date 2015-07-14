@@ -4,6 +4,12 @@ namespace filsh\yii2\oauth2server;
 
 use yii\web\GroupUrlRule;
 
+/**
+ * Instead use bootstrap module
+ * should be removed in v2.1 version
+ * 
+ * @deprecated v2.0.1
+ */
 class Bootstrap implements \yii\base\BootstrapInterface
 {
 
