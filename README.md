@@ -25,28 +25,28 @@ to the require section of your composer.json.
 To use this extension,  simply add the following code in your application configuration as a new module:
 
 ```php
-'modules'=>[
-        //other modules .....
-        'oauth2' => [
-            'class' => 'filsh\yii2\oauth2server\Module',            
-            'tokenParamName' => 'accessToken',
-            'tokenAccessLifetime' => 3600 * 24,
-            'storageMap' => [
-                'user_credentials' => 'app\models\User',
+'bootstrap' => ['oauth2'],
+'modules' => [
+    'oauth2' => [
+        'class' => 'filsh\yii2\oauth2server\Module',
+        'tokenParamName' => 'accessToken',
+        'tokenAccessLifetime' => 3600 * 24,
+        'storageMap' => [
+            'user_credentials' => 'common\models\User',
+        ],
+        'grantTypes' => [
+            'user_credentials' => [
+                'class' => 'OAuth2\GrantType\UserCredentials',
             ],
-            'grantTypes' => [
-                'user_credentials' => [
-                    'class' => 'OAuth2\GrantType\UserCredentials',
-                ],
-                'refresh_token' => [
-                    'class' => 'OAuth2\GrantType\RefreshToken',
-                    'always_issue_new_refresh_token' => true
-                ]
+            'refresh_token' => [
+                'class' => 'OAuth2\GrantType\RefreshToken',
+                'always_issue_new_refresh_token' => true
             ]
         ]
-    ],
+    ]
+]
 ```
-If you want to get Json Web Token (JWT) instead of convetional token, you will need to set `'useJwtToken' => true` in module and then define two more configurations: 
+If you want to get Json Web Token (JWT) instead of convetional token, you will need to set `'useJwtToken' => true` in module and then define two more configurations:
 `'public_key' => 'app\storage\PublicKeyStorage'` which is the class that implements [PublickKeyInterface](https://github.com/bshaffer/oauth2-server-php/blob/develop/src/OAuth2/Storage/PublicKeyInterface.php) and `'access_token' => 'app\storage\JwtAccessToken'` which implements [JwtAccessTokenInterface.php](https://github.com/bshaffer/oauth2-server-php/blob/develop/src/OAuth2/Storage/JwtAccessTokenInterface.php)
 
 For Oauth2 base library provides the default [access_token](https://github.com/bshaffer/oauth2-server-php/blob/develop/src/OAuth2/Storage/JwtAccessToken.php) which works great except that it tries to save the token in the database. So I decided to inherit from it and override the part that tries to save (token size is too big and crashes with VARCHAR(40) in the database.
@@ -63,16 +63,16 @@ namespace app\storage;
  * @author Stefano Mtangoo <mwinjilisti at gmail dot com>
  */
 class JwtAccessToken extends \OAuth2\Storage\JwtAccessToken
-{  
+{
     public function setAccessToken($oauth_token, $client_id, $user_id, $expires, $scope = null)
     {
-         
+
     }
 
     public function unsetAccessToken($access_token)
     {
-        
-    } 
+
+    }
 }
 
 ```
@@ -87,12 +87,12 @@ class PublicKeyStorage implements \OAuth2\Storage\PublicKeyInterface{
 
 
     private $pbk =  null;
-    private $pvk =  null; 
-    
+    private $pvk =  null;
+
     public function __construct()
     {
         //files should be in same directory as this file
-        //keys can be generated using OpenSSL tool with command: 
+        //keys can be generated using OpenSSL tool with command:
         /*
           private key:
           openssl genrsa -out privkey.pem 2048
@@ -100,15 +100,15 @@ class PublicKeyStorage implements \OAuth2\Storage\PublicKeyInterface{
           public key:
           openssl rsa -in privkey.pem -pubout -out pubkey.pem
         */
-        $this->pbk =  file_get_contents('privkey.pem', true); 
-        $this->pvk =  file_get_contents('pubkey.pem', true); 
+        $this->pbk =  file_get_contents('privkey.pem', true);
+        $this->pvk =  file_get_contents('pubkey.pem', true);
     }
 
-    public function getPublicKey($client_id = null){ 
+    public function getPublicKey($client_id = null){
         return  $this->pbk;
     }
 
-    public function getPrivateKey($client_id = null){ 
+    public function getPrivateKey($client_id = null){
         return  $this->pvk;
     }
 
