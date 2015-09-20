@@ -225,6 +225,39 @@ class Controller extends \yii\rest\Controller
 }
 ```
 
+Create action authorize in site controller for Authorization Code
+
+`https://api.mysite.com/authorize?response_type=code&client_id=TestClient&redirect_uri=https://fake/`
+
+[see more](http://bshaffer.github.io/oauth2-server-php-docs/grant-types/authorization-code/)
+
+```php
+/**
+ * SiteController
+ */
+class SiteController extends Controller
+{
+    /**
+     * @return mixed
+     */
+    public function actionAuthorize()
+    {
+        if (Yii::$app->getUser()->getIsGuest())
+            return $this->redirect('login');
+
+        /** @var $module \filsh\yii2\oauth2server\Module */
+        $module = Yii::$app->getModule('oauth2');
+        $response = $module->handleAuthorizeRequest(!Yii::$app->getUser()->getIsGuest(), Yii::$app->getUser()->getId());
+
+        /** @var object $response \OAuth2\Response */
+        Yii::$app->getResponse()->format = \yii\web\Response::FORMAT_JSON;
+
+        return $response->getParameters();
+    }
+}
+```
+
+
 To get access token (js example):
 
 ```js
