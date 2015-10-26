@@ -76,6 +76,16 @@ class Module extends \yii\base\Module
      * @var integer Max refresh token lifetime in seconds
      */
     public $tokenRefreshLifetime;
+
+    /**
+     * @var bool enforce state flag
+     */
+    public $enforceState;
+
+    /**
+     * @var bool allow_implicit flag
+     */
+    public $allowImplicit;
     
     /**
      * @inheritdoc
@@ -141,6 +151,8 @@ class Module extends \yii\base\Module
                     'token_param_name' => $this->tokenParamName,
                     'access_lifetime' => $this->tokenAccessLifetime,
                     'refresh_token_lifetime' => $this->tokenRefreshLifetime,
+                    'enforce_state' => $this->enforceState,
+                    'allow_implicit' => $this->allowImplicit
                     /** add more ... */
                 ],
                 $grantTypes,
