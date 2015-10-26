@@ -273,10 +273,6 @@ With redirect response:
 
 `https://fake/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=bearer&expires_in=3600`
 
-
-
-
-
 To get access token (js example):
 
 ```js
