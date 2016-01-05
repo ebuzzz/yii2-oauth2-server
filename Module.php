@@ -52,19 +52,14 @@ class Module extends \yii\base\Module
      * @var array GrantTypes collection
      */
     public $grantTypes = [];
-
-    /**
-     * @var array ResponseTypes collection
-     */
-    public $responseTypes = [];
     
     /**
-     * @var string Name of access token parameter
+     * @var string name of access token parameter
      */
     public $tokenParamName;
     
     /**
-     * @var integer Max access token lifetime in seconds
+     * @var type max access lifetime
      */
     public $tokenAccessLifetime;
     /**
@@ -73,7 +68,7 @@ class Module extends \yii\base\Module
     public $useJwtToken = false;//ADDED
     
     /**
-     * @var integer Max refresh token lifetime in seconds
+     * @var whether to use JWT tokens
      */
     public $tokenRefreshLifetime;
 
@@ -86,6 +81,18 @@ class Module extends \yii\base\Module
      * @var bool allow_implicit flag
      */
     public $allowImplicit;
+    
+    /**
+     * @inheritdoc
+     */
+    public function bootstrap($app)
+    {
+        $this->initModule($this);
+        
+        if ($app instanceof \yii\console\Application) {
+            $this->controllerNamespace = 'filsh\yii2\oauth2server\commands';
+        }
+    }
     
     /**
      * @inheritdoc
@@ -150,13 +157,9 @@ class Module extends \yii\base\Module
                     'use_jwt_access_tokens' => $this->useJwtToken,//ADDED
                     'token_param_name' => $this->tokenParamName,
                     'access_lifetime' => $this->tokenAccessLifetime,
-                    'refresh_token_lifetime' => $this->tokenRefreshLifetime,
-                    'enforce_state' => $this->enforceState,
-                    'allow_implicit' => $this->allowImplicit
                     /** add more ... */
                 ],
-                $grantTypes,
-                $this->responseTypes
+                $grantTypes
             ]);
 
             $this->set('server', $server);
