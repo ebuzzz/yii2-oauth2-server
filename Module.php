@@ -75,7 +75,8 @@ class Module extends \yii\base\Module
             $server = new \OAuth2\Server($storages, $this->options);
             
             foreach($this->grantTypes as $name => $options) {
-                if(!isset($storages[$name]) || empty($options['class'])) {
+                $storageName = isset($options['storage']) ? $options['storage'] : $name;
+                if(!isset($storages[$storageName]) || empty($options['class'])) {
                     throw new \yii\base\InvalidConfigException('Invalid grant types configuration.');
                 }
                 
@@ -83,7 +84,7 @@ class Module extends \yii\base\Module
                 unset($options['class']);
                 
                 $reflection = new \ReflectionClass($class);
-                $config = array_merge([0 => $storages[$name]], [$options]);
+                $config = array_merge([0 => $storages[$storageName]], [$options]);
 
                 $instance = $reflection->newInstanceArgs($config);
                 $server->addGrantType($instance);
