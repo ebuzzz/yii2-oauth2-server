@@ -43,10 +43,20 @@ class Module extends \yii\base\Module
      */
     public $storageMap = [];
     
+    
+    
+    
+    public $options = [];
+    
     /**
      * @var array GrantTypes collection
      */
     public $grantTypes = [];
+    
+    /**
+     * @var array server options
+     */
+    public $options = [];
     
     /**
      * @var string name of access token parameter
@@ -63,11 +73,39 @@ class Module extends \yii\base\Module
     public $useJwtToken = false;//ADDED
     
     /**
+     * @var whether to use JWT tokens
+     */
+    public $tokenRefreshLifetime;
+
+    /**
+     * @var bool enforce state flag
+     */
+    public $enforceState;
+
+    /**
+     * @var bool allow_implicit flag
+     */
+    public $allowImplicit;
+    
+    /**
+     * @inheritdoc
+     */
+    public function bootstrap($app)
+    {
+        $this->initModule($this);
+        
+        if ($app instanceof \yii\console\Application) {
+            $this->controllerNamespace = 'filsh\yii2\oauth2server\commands';
+        }
+    }
+    
+    /**
      * @inheritdoc
      */
     public function init()
     {
         parent::init();
+        $this->registerComponents();
         $this->registerTranslations();
     }
     
@@ -80,7 +118,8 @@ class Module extends \yii\base\Module
     public function getServer()
     {
         if(!$this->has('server')) {
-            $storages = [];
+            $storages = $this->createStorages();
+            $server = new \OAuth2\Server($storages, $this->options);
             
             if($this->useJwtToken)
             {
@@ -113,18 +152,18 @@ class Module extends \yii\base\Module
                 $config = array_merge([0 => $storages[$name]], [$options]);
 
                 $instance = $reflection->newInstanceArgs($config);
-                $grantTypes[$name] = $instance;
+                $server->addGrantType($instance);
             }
             
             $server = \Yii::$container->get(Server::className(), [
                 $this,
                 $storages,
-                [
+                array_merge(array_filter([
                     'use_jwt_access_tokens' => $this->useJwtToken,//ADDED
                     'token_param_name' => $this->tokenParamName,
                     'access_lifetime' => $this->tokenAccessLifetime,
                     /** add more ... */
-                ],
+                ]), $this->options),
                 $grantTypes
             ]);
 
@@ -147,6 +186,89 @@ class Module extends \yii\base\Module
             $this->set('response', new Response());
         }
         return $this->get('response');
+    }
+
+    /**
+     * Create storages
+     * @return type
+     */
+    public function createStorages()
+    {
+        $connection = Yii::$app->getDb();
+        if(!$connection->getIsActive()) {
+            $connection->open();
+        }
+        
+        $storages = [];
+        foreach($this->storageMap as $name => $storage) {
+            $storages[$name] = Yii::createObject($storage);
+        }
+        
+        $defaults = [
+            'access_token',
+            'authorization_code',
+            'client_credentials',
+            'client',
+            'refresh_token',
+            'user_credentials',
+            'public_key',
+            'jwt_bearer',
+            'scope',
+        ];
+        foreach($defaults as $name) {
+            if(!isset($storages[$name])) {
+                $storages[$name] = Yii::createObject($this->storageDefault);
+            }
+        }
+        
+        return $storages;
+    }
+    
+    /**
+     * Get object instance of model
+     * @param string $name
+     * @param array $config
+     * @return ActiveRecord
+     */
+    public function model($name, $config = [])
+    {
+        if(!isset($this->_models[$name])) {
+            $className = $this->modelClasses[ucfirst($name)];
+            $this->_models[$name] = Yii::createObject(array_merge(['class' => $className], $config));
+        }
+        return $this->_models[$name];
+    }
+    
+    /**
+     * @param $response
+     */
+    public function setResponse($response)
+    {
+        Yii::$app->response->setStatusCode($response->getStatusCode());
+        $headers = Yii::$app->response->getHeaders();
+
+        foreach ($response->getHttpHeaders() as $name => $value) {
+            $headers->set($name, $value);
+        }
+    }
+
+    /**
+     * @param $isAuthorized
+     * @param $userId
+     * @return \OAuth2\ResponseInterface
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function handleAuthorizeRequest($isAuthorized, $userId)
+    {
+        $response = $this->getServer()->handleAuthorizeRequest(
+            $this->getRequest(),
+            $this->getResponse(),
+            $isAuthorized,
+            $userId
+        );
+        $this->setResponse($response);
+
+        return $response;
     }
 
     /**
