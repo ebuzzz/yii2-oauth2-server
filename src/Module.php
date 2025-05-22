@@ -2,13 +2,14 @@
 
 namespace filsh\yii2\oauth2server;
 
-use \Yii;
+use Yii;
 use yii\i18n\PhpMessageSource;
-use  \array_key_exists;
+
+use function array_key_exists;
 
 /**
  * For example,
- * 
+ *
  * ```php
  * 'oauth2' => [
  *     'class' => 'filsh\yii2\oauth2server\Module',
@@ -31,7 +32,7 @@ use  \array_key_exists;
  */
 class Module extends \yii\base\Module
 {
-    const VERSION = '2.0.0';
+    const VERSION = '2.1.0';
     
     /**
      * @var array Model's map
@@ -49,10 +50,14 @@ class Module extends \yii\base\Module
     public $grantTypes = [];
     
     /**
+     * @var array server options
+     */
+    public $options = [];
+
+    /**
      * @var string name of access token parameter
      */
     public $tokenParamName;
-    
     /**
      * @var type max access lifetime
      */
@@ -60,8 +65,9 @@ class Module extends \yii\base\Module
     /**
      * @var whether to use JWT tokens
      */
-    public $useJwtToken = false;//ADDED
-    
+    public $useJwtToken = false;
+
+
     /**
      * @inheritdoc
      */
@@ -119,12 +125,12 @@ class Module extends \yii\base\Module
             $server = \Yii::$container->get(Server::className(), [
                 $this,
                 $storages,
-                [
-                    'use_jwt_access_tokens' => $this->useJwtToken,//ADDED
+                array_merge(array_filter([
+                    'use_jwt_access_tokens' => $this->useJwtToken,
                     'token_param_name' => $this->tokenParamName,
                     'access_lifetime' => $this->tokenAccessLifetime,
                     /** add more ... */
-                ],
+                ]), $this->options),
                 $grantTypes
             ]);
 
@@ -135,10 +141,13 @@ class Module extends \yii\base\Module
     
     public function getRequest()
     {
-        if(!$this->has('request')) {
+        if (!$this->has('request')) {
             $this->set('request', Request::createFromGlobals());
         }
-        return $this->get('request');
+
+        $request = $this->get('request');
+
+        return $request instanceof \yii\web\Request ? new YiiRequestAdapter($request) : $request;
     }
     
     public function getResponse()
@@ -158,8 +167,8 @@ class Module extends \yii\base\Module
     {
         if(!isset(Yii::$app->get('i18n')->translations['modules/oauth2/*'])) {
             Yii::$app->get('i18n')->translations['modules/oauth2/*'] = [
-                'class'    => PhpMessageSource::className(),
-                'basePath' => __DIR__ . '/messages',
+                'class' => PhpMessageSource::className(),
+                'basePath' => __DIR__.'/messages',
             ];
         }
     }
